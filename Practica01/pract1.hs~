@@ -1,0 +1,141 @@
+{-Facultad de Ciencias UNAM - Lógica Computacional 2015-2 
+		  Profesor: Dr. Favio Ezequiel Miranda 
+		  Ayudante: José Manuel Reyes Snyder
+		  Laboratorio: C. Moisés Vázquez Reyes-}
+
+--Tipo de dato fórmula.
+data Prop = Ff  				 -- ⊥ 
+           |Tt  				 -- ⊤
+			  |VarP NVar 		 -- Variables
+			  |Neg Prop  		 -- ¬ φ
+			  |Conj Prop Prop  -- φ ⋀ ψ
+			  |Disy Prop Prop  -- φ ⋁ ψ
+			  |Imp Prop Prop   -- φ → ψ
+			  |Equiv Prop Prop deriving Eq -- φ ↔ ψ
+
+
+--Tipo para representar variables.
+data NVar =	A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z deriving (Show, Eq)
+
+--Hacemos parte de la familia Show al tipo Prop.
+instance Show Prop where
+	show (VarP x) = show x
+	show (Neg (VarP x)) = "~" ++ show x
+	show (Neg p) = "~(" ++ show p ++ ")"
+	show (Conj p q) = "("++show p++")&("++show q++")"
+	show (Disy p q) = "("++show p++")|("++show q++")"
+	show (Imp p q) = "("++show p++")-->("++show q++")"
+	show (Equiv p q) = "("++show p++")<-->("++show q++")"
+	show Tt = "T"
+	show Ff = "F"
+
+--Si la variable está en la lista de estado se evalúa a True, False en otro caso.
+type Estado = [NVar]
+
+--Una literal es una fórmula atómica o la negación de una fórmula atómica.
+--Sólo tomaremos del tipo Prop los casos que nos interesan
+type Literal = Prop
+
+--Una cláusula es una literal o una disyunción de literales.
+--En éste caso interpretamos [l1,l2,..,ln] como l1|l2|..|ln
+type Clausula = [Literal]
+
+
+--EJERCICIOS
+
+--Ejercicio 1
+elimImp :: Prop -> Prop
+elimImp (Imp p q) = Disy ((Neg (elimImp p)) (elimImp q))
+elimImp (Equiv p q) = Conj (elimImp (Imp p q)) (elimImp (Imp q p)) 
+elimImp (Neg p) = Neg $ elimImp p
+elimImp (Conj p q) = (Conj (elimImp p) (elimImp q))
+elimImp (Disy p q) = (Disy (elimImp p) (elimImp q))
+elimImp p = p
+
+--Ejercicio 2
+--NO ESTÁ TERMINADOY
+fnn :: Prop -> Prop
+fnn (Neg (Neg p)) = fnn p
+fnn (Neg (Conj p q)) = Disy (Neg (fnn p)) (Neg (fnn q))
+fnn (Neg (Disy p q)) = Conj (Neg (fnn p)) (Neg (fnn q))
+fnn (Imp p q) = fnn (elimImp (Imp p q))
+fnn (Equiv p q) = fnn (elimImp (Equiv p q))
+fnn p = p
+
+--Ejercicio 3
+distr :: Prop -> Prop
+
+
+--Ejercicio 4
+fnc :: Prop -> Prop
+
+
+--Ejercicio 5
+clausulas :: Prop -> [Clausula]
+
+
+--Ejercicio 6
+esClausulaTaut :: Clausula -> Bool
+
+
+--Ejercicio 7
+esTaut :: Prop -> Bool
+
+--Ejercicio 8
+esFormulaSatis :: Prop -> Bool
+
+
+--PRUEBAS:
+
+f1 = Conj (Disy (Conj (VarP P) (Neg (VarP Q))) (Conj (VarP S) (Neg (VarP T)))) 
+				(Disy (Disy (Neg (VarP S)) (VarP T)) (Disy (Neg (VarP P)) (VarP Q)))
+
+f2 = Disy (Neg (VarP P)) (Conj (Disy (Neg (VarP Q)) (Conj (VarP P) (VarP Q))) (Disy (Disy (Neg (VarP P)) (Neg (VarP Q))) (VarP Q)))
+
+f3 = Conj (Conj (Conj (Disy (VarP P) (VarP S)) (Disy (VarP P) (Neg (VarP T)))) (Conj (Disy (Neg (VarP Q)) (VarP S)) (Disy (Neg (VarP Q)) (Neg (VarP T))))) 
+					(Disy (Disy (Neg (VarP S)) (VarP T)) (Disy (Neg (VarP P)) (VarP Q)))
+
+f4 = Conj (Conj (Disy (Neg (VarP P)) (Disy (Neg (VarP Q)) (VarP P))) (Disy (Neg (VarP P)) (Disy (Neg (VarP Q)) (VarP Q)))) 
+					(Disy (Neg (VarP P)) (Disy (Disy (Neg (VarP P)) (Neg (VarP Q))) (VarP Q)))
+
+f5 = [[VarP P,VarP S],[VarP P,Neg (VarP T)],[Neg (VarP Q),VarP S],
+					[Neg (VarP Q),Neg (VarP T)],[Neg (VarP S),VarP T,Neg (VarP P),VarP Q]] 
+
+f6 = [[Neg (VarP P),Neg (VarP Q),VarP P],[Neg (VarP P),Neg (VarP Q),VarP Q],[Neg (VarP P),
+										Neg (VarP P),Neg (VarP Q),VarP Q]]
+
+--Debe dar True
+prueba1 = (fnn $ Equiv (Imp (VarP P) (VarP Q)) (Neg $ (Imp (VarP S) (VarP T)))) == f1
+
+--Debe dar True
+prueba2 = (fnn $  Imp (Neg $ Neg $ VarP P) (Equiv (VarP Q) (Conj (VarP P) (VarP Q)))) == f2
+
+--Debe dar True
+prueba3 = (fnc $ Equiv (Imp (VarP P) (VarP Q)) (Neg $ (Imp (VarP S) (VarP T)))) == f3
+
+--Debe dar True
+prueba4 = (fnc $ Imp (Neg $ Neg $ VarP P) (Equiv (VarP Q) (Conj (VarP P) (VarP Q)))) == f4
+
+--Debe dar True
+prueba5 = (clausulas $ Equiv (Imp (VarP P) (VarP Q)) (Neg $ (Imp (VarP S) (VarP T)))) == f5
+
+--Debe dar [[~P,~Q,P],[~P,~Q,Q],[~P,~P,~Q,Q]]
+prueba6 = (clausulas $ Imp (Neg $ Neg $ VarP P) (Equiv (VarP Q) (Conj (VarP P) (VarP Q))))
+
+--Debe dar [True,False,True] 
+prueba7 = [esClausulaTaut $ [VarP A, VarP B, Tt], esClausulaTaut $ [VarP A, Ff, Neg $ VarP Z, VarP C],
+						esClausulaTaut $ [VarP A, VarP C, VarP L, VarP M, Neg $ VarP M]]
+
+--Debe dar [True,False]
+prueba8 = [esTaut $ Equiv (Conj (Imp (VarP P) (VarP Q)) (Imp (VarP Q) (VarP P))) (Equiv (VarP P) (VarP Q)),
+						esTaut $ Equiv (Conj (Imp (VarP P) (VarP Q)) (Imp (VarP M) (VarP P))) (Equiv (VarP P) (VarP Q))]
+
+--Debe dar True
+prueba9 = esFormulaSatis $ Imp (Conj (VarP Q) (Imp (Conj (VarP P) (VarP Q)) (VarP R))) (Imp (VarP P) (VarP S))
+
+--Debe dar False
+prueba10 = esFormulaSatis $ Equiv (Conj (VarP P) (Neg $ VarP Q)) (Imp (VarP P) (VarP Q))
+
+
+
+
